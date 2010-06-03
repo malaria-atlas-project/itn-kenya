@@ -91,9 +91,7 @@ def make_model(lon,lat,input_data,covariate_keys,pos,neg,cpus=1):
             # The nugget variance.
             V = pm.Exponential('V', .1, value=1.)
             tau = 1./V
-            def C(amp=amp,scale=scale,inc=inc,ecc=ecc,scale_t=scale_t, t_lim_corr=t_lim_corr, sin_frac=sin_frac, ra=ra):
-                eval_fun = CovarianceWithCovariates(my_st, input_data, covariate_keys, ui, fac=1.e4, ra=ra)
-
+            
             # Create the covariance & its evaluation at the data locations.
             @pm.deterministic(trace=True)
             def C(amp=amp, scale=scale, diff_degree=diff_degree):
@@ -111,8 +109,9 @@ def make_model(lon,lat,input_data,covariate_keys,pos,neg,cpus=1):
             for i in xrange(len(pos)/grainsize+1):
                 sl = slice(i*grainsize,(i+1)*grainsize,None)
                 # Nuggeted field in this cluster
-                if len(f[fi[sl]].value)>0:
-                    eps_p_f_d.append(pm.Normal('eps_p_f_%i'%i, sp_sub.f_eval[fi[sl]], tau, value=pm.stukel_logit(s_hat[sl],a1.value,a2.value),trace=False))
+                this_f = sp_sub.f_eval[fi[sl]]
+                if len(this_f.value)>0:
+                    eps_p_f_d.append(pm.Normal('eps_p_f_%i'%i, this_f, tau, value=pm.stukel_logit(s_hat[sl],a1.value,a2.value),trace=False))
 
                     # The allele frequency
                     s_d.append(pm.Lambda('s_%i'%i,lambda lt=eps_p_f_d[-1]: stukel_invlogit(lt,a1,a2),trace=False))
@@ -133,8 +132,4 @@ def make_model(lon,lat,input_data,covariate_keys,pos,neg,cpus=1):
             gc.collect()
         
 
-    out = locals()
-    out.pop('sp_sub')
-    out.update(sp_sub)
-
-    return out
+    return locals()
