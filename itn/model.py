@@ -10,6 +10,7 @@ import gc
 from map_utils import *
 from generic_mbg import *
 import generic_mbg
+from zib import zib
 
 __all__ = ['make_model']
 
@@ -77,9 +78,11 @@ def make_model(lon,lat,input_data,covariate_keys,pos,neg,cpus=1):
             # The partial sill.
             amp = pm.Exponential('amp', .1, value=1.)
 
-            a1 = pm.Uninformative('a1',1)
-            a2 = pm.Uninformative('a2',1)
-
+            a1 = pm.Uninformative('a1',1,observed=True)
+            a2 = pm.Uninformative('a2',1,observed=True)
+            
+            p0 = pm.Uniform('p0',0,1,value=.01)
+            
             # The range parameters. Units are RADIANS. 
             # 1 radian = the radius of the earth, about 6378.1 km
             scale = pm.Exponential('scale', .1, value=.08)
@@ -117,7 +120,9 @@ def make_model(lon,lat,input_data,covariate_keys,pos,neg,cpus=1):
                     s_d.append(pm.Lambda('s_%i'%i,lambda lt=eps_p_f_d[-1]: stukel_invlogit(lt,a1,a2),trace=False))
 
                     # The observed allele frequencies
-                    data_d.append(pm.Binomial('data_%i'%i, pos[sl]+neg[sl], s_d[-1], value=pos[sl], observed=True))
+                    @pm.stochastic(name='data_%i'%i, observed=True)
+                    def d_now(value=pos[sl], p0=p0, n=pos[sl]+neg[sl], p=s_d[-1]):
+                        return zib(value, p0, n, p)
             
             # The field plus the nugget
             @pm.deterministic

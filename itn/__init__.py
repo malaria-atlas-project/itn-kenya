@@ -35,6 +35,6 @@ validate_postproc = [itn_val]
 def mcmc_init(M):
     M.use_step_method(pm.gp.GPEvaluationGibbs, M.sp_sub, M.V, M.eps_p_f, ti=M.ti)
     M.use_step_method(pm.gp.GPParentAdaptiveMetropolis, [M.amp, M.scale, M.diff_degree, M.V], scales={M.amp: .001, M.scale: .001, M.diff_degree: .001, M.V: .001})
-    M.use_step_method(pm.AdaptiveMetropolis, [M.a1, M.a2, M.V], scales={M.a1: .001, M.a2: .001, M.V: .001})
+    # M.use_step_method(pm.AdaptiveMetropolis, [M.a1, M.a2, M.V], scales={M.a1: .001, M.a2: .001, M.V: .001})
 
 metadata_keys = ['ti','fi','ui']
