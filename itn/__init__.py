@@ -1,6 +1,6 @@
 # from mcmc import *
 from model import *
-from generic_mbg import stukel_invlogit, FieldStepper
+from generic_mbg import stukel_invlogit
 import pymc as pm
 import numpy as np
 
@@ -22,6 +22,15 @@ def itn_map(sp_sub, a1, a2):
     return itn
     
 map_postproc = [itn_map]
+
+def simdata_postproc(sp_sub, survey_plan, a1, a2):
+    p = pm.stukel_invlogit(sp_sub, a1, a2)
+    n = survey_plan.n
+    return pm.rbinomial(n, p)
+    
+def survey_likelihood(sp_sub, survey_plan, data, i, a1, a2):
+    data_ = np.ones_like(sp_sub)*data[i]
+    return pm.binomial_like(data_, survey_plan.n[i], pm.stukel_invlogit(sp_sub, a1, a2))
 
 def itn_val(data):
     obs = data.pos
